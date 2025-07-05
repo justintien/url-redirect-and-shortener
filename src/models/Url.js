@@ -1,5 +1,4 @@
-const mongoose = require('mongoose'); // 這裡需要解除註解
-const shortid = require('shortid'); // 這裡需要解除註解
+const mongoose = require('mongoose');
 
 // 定義單次點擊的資料結構
 const clickSchema = new mongoose.Schema({
@@ -24,19 +23,27 @@ const urlSchema = new mongoose.Schema({
         type: String,
         required: true,
         unique: true, // 短 ID 必須是唯一的
-        default: shortid.generate // 預設使用 shortid 庫自動生成
+        minlength: 6,
+        maxlength: 255
     },
     customShortId: { // 允許使用者自訂短網址路徑
         type: String,
         unique: true,
-        sparse: true // 允許此欄位為空，但如果存在則必須唯一
+        sparse: true, // 允許此欄位為空，但如果存在則必須唯一
+        minlength: 10, // <--- 新增：自訂 ID 最小長度
+        maxlength: 255 // <--- 新增：自訂 ID 最大長度
     },
     createdAt: {
         type: Date,
         default: Date.now // 創建時間預設為當前時間
     },
     expiresAt: Date, // 短網址的到期時間 (可選)
-    password: String, // 密碼保護 (可選)
+    password: String, // 公開密碼保護 (可選)
+    managementPassword: { // 新增：後台管理密碼
+        type: String,
+        required: true,
+        select: false // 預設不返回此欄位，增加安全性
+    },
     totalClicks: {
         type: Number,
         default: 0 // 總點擊數，預設為 0

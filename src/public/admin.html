@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>縮網址後台管理</title>
+    <style>
+        body { font-family: 'Inter', Arial, sans-serif; margin: 0; padding: 20px; background-color: #f0f2f5; display: flex; justify-content: center; align-items: flex-start; min-height: 100vh; }
+        .container {
+            background: #ffffff;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+            width: 100%;
+            max-width: 800px;
+            box-sizing: border-box;
+        }
+        h1 { color: #333; text-align: center; margin-bottom: 30px; }
+        .form-group { margin-bottom: 15px; }
+        label { display: block; margin-bottom: 5px; color: #555; font-weight: bold; }
+        input[type="text"], input[type="url"], input[type="password"], input[type="datetime-local"], select {
+            width: calc(100% - 24px);
+            padding: 12px;
+            margin-bottom: 15px;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            font-size: 16px;
+            box-sizing: border-box;
+            transition: border-color 0.3s ease;
+        }
+        input[type="text"]:focus, input[type="url"]:focus, input[type="password"]:focus, input[type="datetime-local"]:focus, select:focus {
+            border-color: #007bff;
+            outline: none;
+            box-shadow: 0 0 5px rgba(0, 123, 255, 0.2);
+        }
+        button {
+            background-color: #007bff;
+            color: white;
+            padding: 12px 25px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 17px;
+            transition: background-color 0.3s ease, transform 0.2s ease;
+            box-shadow: 0 4px 8px rgba(0, 123, 255, 0.2);
+            width: 100%;
+        }
+        button:hover {
+            background-color: #0056b3;
+            transform: translateY(-2px);
+        }
+        button:active {
+            transform: translateY(0);
+        }
+        .result, .error-message, .success-message {
+            margin-top: 25px;
+            padding: 15px;
+            border-radius: 8px;
+            font-size: 15px;
+            word-wrap: break-word;
+        }
+        .result { background-color: #e9f7ff; border: 1px solid #cceeff; color: #333; }
+        .error-message { color: #dc3545; background-color: #f8d7da; border: 1px solid #f5c6cb; }
+        .success-message { color: #28a745; background-color: #d4edda; border: 1px solid #c3e6cb; }
+        .result a { color: #007bff; text-decoration: none; font-weight: bold; }
+        .result a:hover { text-decoration: underline; }
+
+        #admin-panel { display: none; margin-top: 30px; }
+        .tabs { display: flex; margin-bottom: 20px; border-bottom: 2px solid #e0e0e0; }
+        .tab-button {
+            flex: 1;
+            padding: 12px 0;
+            cursor: pointer;
+            border: none;
+            background-color: transparent;
+            font-size: 16px;
+            color: #555;
+            transition: all 0.3s ease;
+            border-bottom: 3px solid transparent;
+            border-radius: 8px 8px 0 0;
+        }
+        .tab-button:hover { background-color: #f7f7f7; }
+        .tab-button.active {
+            color: #007bff;
+            border-bottom: 3px solid #007bff;
+            font-weight: bold;
+            background-color: #fff;
+        }
+        .tab-content { padding: 20px 0; display: none; animation: fadeIn 0.5s ease-out; }
+        .tab-content.active { display: block; }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .section-header {
+            font-size: 1.3em;
+            color: #444;
+            margin-top: 20px;
+            margin-bottom: 15px;
+            padding-bottom: 5px;
+            border-bottom: 1px solid #eee;
+        }
+        ul { list-style: none; padding: 0; }
+        ul li { background-color: #f8f9fa; margin-bottom: 8px; padding: 10px; border-radius: 5px; border: 1px solid #e9ecef; }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+        th { background-color: #f2f2f2; }
+        .chart-container {
+            width: 100%;
+            max-width: 600px;
+            margin: 20px auto;
+            background-color: #fff;
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+        }
+        @media (max-width: 768px) {
+            .container { margin: 10px; padding: 20px; }
+            input, button { font-size: 14px; padding: 10px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>縮網址後台管理</h1>
+
+        <div id="admin-login">
+            <h2 class="section-header">登入後台</h2>
+            <div class="form-group">
+                <label for="loginShortId">短網址 ID:</label>
+                <input type="text" id="loginShortId" placeholder="輸入短網址 ID" required>
+            </div>
+            <div class="form-group">
+                <label for="loginManagementPassword">管理密碼:</label>
+                <input type="password" id="loginManagementPassword" placeholder="輸入管理密碼" required>
+            </div>
+            <button onclick="loginAdmin()">登入</button>
+            <div id="loginResult" class="result"></div>
+        </div>
+
+        <div id="admin-panel">
+            <div class="tabs">
+                <button class="tab-button active" onclick="openAdminTab(event, 'update-settings')">更新設定</button>
+                <button class="tab-button" onclick="openAdminTab(event, 'traffic-analysis')">流量分析</button>
+            </div>
+
+            <div id="update-settings" class="tab-content active">
+                <h2 class="section-header">更新縮網址設定</h2>
+                <div class="form-group">
+                    <label for="updateLongUrl">新的目標網址:</label>
+                    <input type="url" id="updateLongUrl" placeholder="輸入新的目標網址" required>
+                </div>
+                <div class="form-group">
+                    <label for="updatePassword">新的公開密碼保護 (留空則移除):</label>
+                    <input type="password" id="updatePassword" placeholder="用戶訪問時需要輸入的密碼">
+                </div>
+                <div class="form-group">
+                    <label for="updateExpiresAt">新的到期時間 (留空則移除):</label>
+                    <input type="datetime-local" id="updateExpiresAt">
+                </div>
+                <button onclick="updateShortUrlSettings()">更新設定</button>
+                <div id="updateSettingsResult" class="result"></div>
+            </div>
+
+            <div id="traffic-analysis" class="tab-content">
+                <h2 class="section-header">流量分析</h2>
+                <p><strong>當前縮網址:</strong> <span id="currentShortUrlDisplay"></span></p>
+                <p><strong>原始目標網址:</strong> <span id="originalLongUrlDisplay"></span></p>
+                <p><strong>總點擊數:</strong> <span id="totalClicksDisplay"></span></p>
+                <p><strong>創建時間:</strong> <span id="createdAtDisplay"></span></p>
+                <p><strong>到期時間:</strong> <span id="expiresAtDisplay"></span></p>
+                <p><strong>公開密碼保護:</strong> <span id="passwordProtectedDisplay"></span></p>
+
+                <h3 class="section-header">最近點擊紀錄 (最多 50 筆)</h3>
+                <div id="recentClicksList"></div>
+
+                <h3 class="section-header">流量分佈圖表</h3>
+                <div class="chart-container">
+                    <canvas id="countryChart"></canvas>
+                </div>
+                <div class="chart-container">
+                    <canvas id="deviceTypeChart"></canvas>
+                </div>
+                <div class="chart-container">
+                    <canvas id="osChart"></canvas>
+                </div>
+                <div class="chart-container">
+                    <canvas id="browserChart"></canvas>
+                </div>
+                <div class="chart-container">
+                    <canvas id="referrerChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="/admin.js"></script>
+</body>
+</html>

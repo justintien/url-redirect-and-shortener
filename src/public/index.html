@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>我的縮網址系統</title>
+    <title>一個免費強大的縮網址服務</title>
     <style>
         body { font-family: 'Inter', Arial, sans-serif; margin: 0; padding: 20px; background-color: #f0f2f5; display: flex; justify-content: center; align-items: flex-start; min-height: 100vh; }
         .container {
@@ -16,40 +16,8 @@
             box-sizing: border-box;
         }
         h1 { color: #333; text-align: center; margin-bottom: 30px; }
-        .tabs { display: flex; margin-bottom: 20px; border-bottom: 2px solid #e0e0e0; }
-        .tab-button {
-            flex: 1;
-            padding: 12px 0;
-            cursor: pointer;
-            border: none;
-            background-color: transparent;
-            font-size: 16px;
-            color: #555;
-            transition: all 0.3s ease;
-            border-bottom: 3px solid transparent;
-            border-radius: 8px 8px 0 0;
-        }
-        .tab-button:hover { background-color: #f7f7f7; }
-        .tab-button.active {
-            color: #007bff;
-            border-bottom: 3px solid #007bff;
-            font-weight: bold;
-            background-color: #fff;
-        }
-        .tab-content { padding: 20px 0; display: none; animation: fadeIn 0.5s ease-out; }
-        .tab-content.active { display: block; }
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-        .section-header {
-            font-size: 1.3em;
-            color: #444;
-            margin-top: 20px;
-            margin-bottom: 15px;
-            padding-bottom: 5px;
-            border-bottom: 1px solid #eee;
-        }
+        .form-group { margin-bottom: 15px; }
+        label { display: block; margin-bottom: 5px; color: #555; font-weight: bold; }
         input[type="text"], input[type="url"], input[type="password"], input[type="datetime-local"] {
             width: calc(100% - 24px);
             padding: 12px;
@@ -75,6 +43,7 @@
             font-size: 17px;
             transition: background-color 0.3s ease, transform 0.2s ease;
             box-shadow: 0 4px 8px rgba(0, 123, 255, 0.2);
+            width: 100%;
         }
         button:hover {
             background-color: #0056b3;
@@ -104,49 +73,55 @@
             margin-bottom: 15px;
             font-size: 14px;
         }
-        ul { list-style: none; padding: 0; }
-        ul li { background-color: #f8f9fa; margin-bottom: 8px; padding: 10px; border-radius: 5px; border: 1px solid #e9ecef; }
+        .success-message {
+            color: #28a745;
+            background-color: #d4edda;
+            border: 1px solid #c3e6cb;
+            padding: 10px;
+            border-radius: 6px;
+            margin-bottom: 15px;
+            font-size: 14px;
+        }
+        .admin-info {
+            background-color: #fff3cd;
+            border: 1px solid #ffeeba;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 20px;
+            font-size: 0.95em;
+            color: #856404;
+        }
+        .admin-info p { margin-bottom: 5px; }
+        .admin-info strong { color: #664d03; }
         @media (max-width: 768px) {
             .container { margin: 10px; padding: 20px; }
-            .tab-button { font-size: 14px; padding: 10px 0; }
             input, button { font-size: 14px; padding: 10px; }
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>我的縮網址系統</h1>
+        <h1>縮網址</h1>
 
-        <div class="tabs">
-            <button class="tab-button active" onclick="openTab(event, 'shorten')">縮網址</button>
-            <button class="tab-button" onclick="openTab(event, 'update')">更改目標網址</button>
-            <button class="tab-button" onclick="openTab(event, 'analyze')">流量分析</button>
-        </div>
-
-        <div id="shorten" class="tab-content active">
-            <h2 class="section-header">縮網址</h2>
+        <div class="form-group">
+            <label for="longUrlInput">長網址:</label>
             <input type="url" id="longUrlInput" placeholder="輸入要縮短的長網址 (e.g., https://example.com/very/long/url)" required>
-            <input type="text" id="customShortIdInput" placeholder="自訂短網址路徑 (可選, e.g., my-link)">
-            <input type="datetime-local" id="expiresAtInput" placeholder="到期時間 (可選)">
-            <input type="password" id="passwordInput" placeholder="密碼保護 (可選)">
-            <button onclick="shortenUrl()">縮短網址</button>
-            <div id="shortenResult" class="result"></div>
         </div>
-
-        <div id="update" class="tab-content">
-            <h2 class="section-header">更改目標網址</h2>
-            <input type="text" id="updateShortId" placeholder="輸入要更新的短網址 ID (e.g., abcdef)">
-            <input type="url" id="newLongUrl" placeholder="輸入新的目標網址 (e.g., https://new-example.com)" required>
-            <button onclick="updateUrl()">更新網址</button>
-            <div id="updateResult" class="result"></div>
+        <div class="form-group">
+            <label for="customShortIdInput">自訂短網址路徑 (可選, 最少10字):</label>
+            <input type="text" id="customShortIdInput" placeholder="e.g., my-link">
         </div>
-
-        <div id="analyze" class="tab-content">
-            <h2 class="section-header">流量分析</h2>
-            <input type="text" id="analyzeShortId" placeholder="輸入要分析的短網址 ID (e.g., abcdef)">
-            <button onclick="analyzeUrl()">分析流量</button>
-            <div id="analyzeResult" class="result"></div>
+        <div class="form-group">
+            <label for="expiresAtInput">到期時間 (可選):</label>
+            <input type="datetime-local" id="expiresAtInput">
         </div>
+        <div class="form-group">
+            <label for="passwordInput">公開密碼保護 (可選):</label>
+            <input type="password" id="passwordInput" placeholder="用戶訪問時需要輸入的密碼">
+        </div>
+        <!-- 管理密碼將由後端自動生成，並在結果中顯示 -->
+        <button onclick="shortenUrl()">縮短網址</button>
+        <div id="shortenResult" class="result"></div>
     </div>
 
     <script src="script.js"></script>

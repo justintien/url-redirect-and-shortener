@@ -1,7 +1,7 @@
 {
   "name": "url-redirect-and-shortener",
   "version": "1.0.0",
-  "description": "URL Redirect &amp; Shortener",
+  "description": "A URL shortening system with admin and password protection features.",
   "main": "src/server.js",
   "scripts": {
     "start": "node src/server.js",
@@ -19,6 +19,7 @@
   },
   "homepage": "https://github.com/justintien/url-redirect-and-shortener#readme",
   "dependencies": {
+    "crypto": "^1.0.1",
     "express": "^5.1.0",
     "geoip-lite": "^1.4.10",
     "mongoose": "^8.16.1",

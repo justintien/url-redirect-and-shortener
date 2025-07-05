@@ -1,13 +1,13 @@
 services:
   app:
-    platform: linux/amd64 # for M1
+    platform: linux/amd64
     image: node:22-alpine
     working_dir: /app
     volumes:
       - ./:/app
     ports:
-      - "9527:9527"
-    command: 
+      - 9527:9527
+    command:
       - /bin/sh
       - -c
       - |
@@ -15,9 +15,9 @@ services:
         npm run dev
     restart: unless-stopped
     logging:
-      driver: "json-file"
+      driver: json-file
       options:
-        max-size: "10m"
+        max-size: 10m
         max-file: "3"
     environment:
       NODE_ENV: development
@@ -25,15 +25,9 @@ services:
     depends_on:
       - mongodb
   mongodb:
-    platform: linux/amd64 # for M1
+    platform: linux/amd64
     image: mongo:4
     ports:
-      - "27017:27017"
+      - 27017:27017
     volumes:
-      - ./mongodb_data:/data/db # 將 MongoDB 數據持久化到具名卷 (named volume)
-    healthcheck: # <--- 添加 MongoDB 健康檢查
-      test: echo 'db.runCommand("ping").ok' | mongosh --quiet # 測試 MongoDB 是否響應
-      interval: 10s # 每 10 秒檢查一次
-      timeout: 5s # 超時時間 5 秒
-      retries: 5 # 重試 5 次
-      start_period: 10s # 啟動後等待 10 秒再開始健康檢查
+      - ./mongodb_data:/data/db
