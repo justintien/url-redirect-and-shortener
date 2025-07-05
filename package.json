@@ -1,0 +1,32 @@
+{
+  "name": "url-redirect-and-shortener",
+  "version": "1.0.0",
+  "description": "URL Redirect &amp; Shortener",
+  "main": "src/server.js",
+  "scripts": {
+    "start": "node src/server.js",
+    "dev": "nodemon src/server.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/justintien/url-redirect-and-shortener.git"
+  },
+  "author": "",
+  "license": "AGPL-3.0-or-later",
+  "bugs": {
+    "url": "https://github.com/justintien/url-redirect-and-shortener/issues"
+  },
+  "homepage": "https://github.com/justintien/url-redirect-and-shortener#readme",
+  "dependencies": {
+    "express": "^5.1.0",
+    "geoip-lite": "^1.4.10",
+    "mongoose": "^8.16.1",
+    "shortid": "^2.2.17",
+    "ua-parser-js": "^2.0.4",
+    "validator": "^13.15.15"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.10"
+  }
+}
