@@ -75,3 +75,72 @@ async function shortenUrl() {
         resultDiv.innerHTML = '<p class="error-message">網路或伺服器錯誤，請檢查控制台。</p>';
     }
 }
+
+
+// Feedback Modal Functions
+const feedbackModal = document.getElementById('feedbackModal');
+const feedbackMessageInput = document.getElementById('feedbackMessage');
+const contactInfoInput = document.getElementById('contactInfo');
+const feedbackResultDiv = document.getElementById('feedbackResult');
+
+function openFeedbackModal() {
+    feedbackModal.style.display = 'flex'; // Use flex to center content
+    feedbackMessageInput.value = '';
+    contactInfoInput.value = '';
+    feedbackResultDiv.innerHTML = '';
+}
+
+function closeFeedbackModal() {
+    feedbackModal.style.display = 'none';
+}
+
+// Close modal when clicking outside of it
+window.onclick = function(event) {
+    if (event.target == feedbackModal) {
+        closeFeedbackModal();
+    }
+}
+
+async function submitFeedback() {
+    const message = feedbackMessageInput.value;
+    const contactInfo = contactInfoInput.value;
+    feedbackResultDiv.innerHTML = '';
+
+    if (!message || message.trim().length === 0) {
+        feedbackResultDiv.innerHTML = '<p class="error-message">意見回饋訊息不能為空。</p>';
+        return;
+    }
+    if (message.length > 500) {
+        feedbackResultDiv.innerHTML = '<p class="error-message">意見回饋訊息超過 500 個字元的限制。</p>';
+        return;
+    }
+    if (contactInfo && contactInfo.length > 100) {
+        feedbackResultDiv.innerHTML = '<p class="error-message">聯絡方式超過 100 個字元的限制。</p>';
+        return;
+    }
+
+    try {
+        const response = await fetch('/api/feedback', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ message, contactInfo })
+        });
+
+        const data = await response.json();
+
+        if (response.ok) {
+            feedbackResultDiv.innerHTML = `<p class="success-message">${data.message}</p>`;
+            // Optionally close modal after a short delay
+            setTimeout(() => {
+                closeFeedbackModal();
+            }, 2000);
+        } else {
+            feedbackResultDiv.innerHTML = `<p class="error-message">錯誤: ${data.error || '提交意見失敗'}</p>`;
+        }
+    } catch (error) {
+        console.error('提交意見請求失敗:', error);
+        feedbackResultDiv.innerHTML = '<p class="error-message">網路或伺服器錯誤，請檢查控制台。</p>';
+    }
+}

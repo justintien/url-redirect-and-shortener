@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>縮網址後台管理</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <style>
         body { font-family: 'Inter', Arial, sans-serif; margin: 0; padding: 20px; background-color: #f0f2f5; display: flex; justify-content: center; align-items: flex-start; min-height: 100vh; }
         .container {
@@ -114,9 +115,35 @@
             border-radius: 8px;
             box-shadow: 0 2px 5px rgba(0,0,0,0.05);
         }
+         /* Footer styles */
+        .footer {
+            margin-top: 40px;
+            text-align: center;
+            color: #777;
+            font-size: 0.9em;
+            padding-top: 20px;
+            border-top: 1px solid #e0e0e0;
+        }
+        .footer a {
+            color: #007bff;
+            text-decoration: none;
+            margin: 0 10px;
+            transition: color 0.3s ease;
+        }
+        .footer a:hover {
+            color: #0056b3;
+            text-decoration: underline;
+        }
+        .footer .social-icon {
+            font-size: 1.5em;
+            vertical-align: middle;
+            margin-right: 5px;
+        }
         @media (max-width: 768px) {
             .container { margin: 10px; padding: 20px; }
             input, button { font-size: 14px; padding: 10px; }
+            .footer a { margin: 0 5px; }
+            .footer .social-icon { font-size: 1.2em; }
         }
     </style>
 </head>
@@ -191,6 +218,13 @@
                     <canvas id="referrerChart"></canvas>
                 </div>
             </div>
+        </div>
+        <!-- Footer with GitHub -->
+        <div class="footer">
+            <a href="https://github.com/justintien/url-redirect-and-shortener" target="_blank" title="GitHub 專案">
+                <i class="fab fa-github social-icon"></i> GitHub 開源
+            </a>
+            <p>&copy; 2025 一個免費強大的縮網址服務. All rights reserved.</p>
         </div>
     </div>
 

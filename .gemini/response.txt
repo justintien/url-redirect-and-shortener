@@ -7,7 +7,8 @@ const express = require('express');
 const mongoose = require('mongoose');
 const path = require('path');
 const urlController = require('./controllers/urlController'); // 引入 URL 控制器
-const adminController = require('./controllers/adminController'); // 引入新的 Admin 控制器
+const adminController = require('./controllers/adminController'); // 引入 Admin 控制器
+const feedbackController = require('./controllers/feedbackController'); // 引入新的 Feedback 控制器
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -55,6 +56,9 @@ app.post('/api/admin/details/:shortId', adminController.getAdminUrlDetails);
 // API 路由 - 更新指定短網址的目標長網址，需要管理密碼驗證
 app.put('/api/admin/update/:shortId', adminController.updateTargetUrl);
 
+// API 路由 - 提交意見回饋
+app.post('/api/feedback', feedbackController.submitFeedback);
+
 // GET /
 // 應用程式的根路由，導向到前端的 index.html 頁面 (縮網址主頁)
 app.get('/', (req, res) => {
@@ -83,11 +87,8 @@ const mongoose = require('mongoose');
 const shortid = require('shortid'); // 引入 shortid 庫
 
 // 設定 shortid 的字元集和長度
-// 這裡使用預設的字元集，並設定最小/最大長度為 6
 // 注意：shortid 庫本身沒有直接設定固定長度的方法，我們透過 Mongoose Schema 進行驗證
 shortid.characters('0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ$_');
-// shortid.worker(1); // 這些設定對於我們現在手動控制長度的方式不再是必須的
-// shortid.seed(2025);
 
 // 定義單次點擊的資料結構
 const clickSchema = new mongoose.Schema({
@@ -142,6 +143,36 @@ const urlSchema = new mongoose.Schema({
 
 const Url = mongoose.model('Url', urlSchema); // 建立 Url 模型
 module.exports = Url; // 實際檔案中會這樣導出
+
+// =============================================================================
+// models/Feedback.js - MongoDB 資料模型定義
+// 定義了意見回饋的資料結構 (新檔案)
+// =============================================================================
+
+// 這個部分應該放在 models/Feedback.js 檔案中
+const mongoose = require('mongoose');
+
+const feedbackSchema = new mongoose.Schema({
+    message: {
+        type: String,
+        required: true,
+        trim: true,
+        maxlength: 500 // 限制意見回饋訊息長度
+    },
+    contactInfo: { // 使用者可選填的聯絡資訊
+        type: String,
+        trim: true,
+        maxlength: 100
+    },
+    createdAt: {
+        type: Date,
+        default: Date.now
+    }
+});
+
+const Feedback = mongoose.model('Feedback', feedbackSchema);
+module.exports = Feedback;
+
 
 // =============================================================================
 // controllers/urlController.js - 處理 URL 相關邏輯 (公開部分)
@@ -497,6 +528,44 @@ exports.updateTargetUrl = [
 ];
 
 // =============================================================================
+// controllers/feedbackController.js - 處理意見回饋邏輯 (新檔案)
+// =============================================================================
+
+// 這個部分應該放在 controllers/feedbackController.js 檔案中
+const Feedback = require('../models/Feedback');
+const validator = require('validator');
+
+exports.submitFeedback = async (req, res) => {
+    const { message, contactInfo } = req.body;
+
+    if (!message || message.trim().length === 0) {
+        return res.status(400).json({ error: 'Feedback message cannot be empty.' });
+    }
+
+    if (message.length > 500) {
+        return res.status(400).json({ error: 'Feedback message exceeds maximum length of 500 characters.' });
+    }
+
+    if (contactInfo && contactInfo.length > 100) {
+        return res.status(400).json({ error: 'Contact information exceeds maximum length of 100 characters.' });
+    }
+
+    try {
+        const newFeedback = new Feedback({
+            message: message.trim(),
+            contactInfo: contactInfo ? contactInfo.trim() : undefined
+        });
+
+        await newFeedback.save();
+        res.status(201).json({ message: 'Feedback submitted successfully! Thank you for your input.' });
+
+    } catch (err) {
+        console.error('Error submitting feedback:', err);
+        res.status(500).json({ error: 'Server error during feedback submission.' });
+    }
+};
+
+// =============================================================================
 // public/index.html - 前端 HTML 頁面 (縮網址主頁)
 // 僅包含縮網址功能
 // =============================================================================
@@ -508,6 +577,7 @@ exports.updateTargetUrl = [
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>我的縮網址系統</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <style>
         body { font-family: 'Inter', Arial, sans-serif; margin: 0; padding: 20px; background-color: #f0f2f5; display: flex; justify-content: center; align-items: flex-start; min-height: 100vh; }
         .container {
@@ -518,11 +588,12 @@ exports.updateTargetUrl = [
             width: 100%;
             max-width: 700px;
             box-sizing: border-box;
+            position: relative; /* For feedback button positioning */
         }
         h1 { color: #333; text-align: center; margin-bottom: 30px; }
         .form-group { margin-bottom: 15px; }
         label { display: block; margin-bottom: 5px; color: #555; font-weight: bold; }
-        input[type="text"], input[type="url"], input[type="password"], input[type="datetime-local"] {
+        input[type="text"], input[type="url"], input[type="password"], input[type="datetime-local"], textarea {
             width: calc(100% - 24px);
             padding: 12px;
             margin-bottom: 15px;
@@ -532,7 +603,7 @@ exports.updateTargetUrl = [
             box-sizing: border-box;
             transition: border-color 0.3s ease;
         }
-        input[type="text"]:focus, input[type="url"]:focus, input[type="password"]:focus, input[type="datetime-local"]:focus {
+        input[type="text"]:focus, input[type="url"]:focus, input[type="password"]:focus, input[type="datetime-local"]:focus, textarea:focus {
             border-color: #007bff;
             outline: none;
             box-shadow: 0 0 5px rgba(0, 123, 255, 0.2);
@@ -548,6 +619,7 @@ exports.updateTargetUrl = [
             transition: background-color 0.3s ease, transform 0.2s ease;
             box-shadow: 0 4px 8px rgba(0, 123, 255, 0.2);
             width: 100%;
+            margin-bottom: 10px; /* Add margin for multiple buttons */
         }
         button:hover {
             background-color: #0056b3;
@@ -597,9 +669,111 @@ exports.updateTargetUrl = [
         }
         .admin-info p { margin-bottom: 5px; }
         .admin-info strong { color: #664d03; }
+
+        /* Footer styles */
+        .footer {
+            margin-top: 40px;
+            text-align: center;
+            color: #777;
+            font-size: 0.9em;
+            padding-top: 20px;
+            border-top: 1px solid #e0e0e0;
+        }
+        .footer a {
+            color: #007bff;
+            text-decoration: none;
+            margin: 0 10px;
+            transition: color 0.3s ease;
+        }
+        .footer a:hover {
+            color: #0056b3;
+            text-decoration: underline;
+        }
+        .footer .social-icon {
+            font-size: 1.5em;
+            vertical-align: middle;
+            margin-right: 5px;
+        }
+        .sponsor-section {
+            margin-top: 30px;
+            padding: 20px;
+            background-color: #e6f7ff;
+            border: 1px solid #a8d7ff;
+            border-radius: 8px;
+            text-align: center;
+        }
+        .sponsor-section h2 {
+            color: #007bff;
+            margin-bottom: 15px;
+        }
+        .sponsor-section p {
+            margin-bottom: 10px;
+            line-height: 1.6;
+        }
+        .sponsor-section a {
+            display: inline-block;
+            background-color: #28a745;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 5px;
+            text-decoration: none;
+            margin: 10px 5px;
+            transition: background-color 0.3s ease;
+        }
+        .sponsor-section a:hover {
+            background-color: #218838;
+        }
+
+        /* Modal styles */
+        .modal {
+            display: none; /* Hidden by default */
+            position: fixed; /* Stay in place */
+            z-index: 1000; /* Sit on top */
+            left: 0;
+            top: 0;
+            width: 100%; /* Full width */
+            height: 100%; /* Full height */
+            overflow: auto; /* Enable scroll if needed */
+            background-color: rgba(0,0,0,0.4); /* Black w/ opacity */
+            align-items: center;
+            justify-content: center;
+        }
+        .modal-content {
+            background-color: #fefefe;
+            margin: auto;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+            width: 90%;
+            max-width: 500px;
+            position: relative;
+            animation: fadeInModal 0.3s ease-out;
+        }
+        .close-button {
+            color: #aaa;
+            position: absolute;
+            top: 10px;
+            right: 15px;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        .close-button:hover,
+        .close-button:focus {
+            color: black;
+            text-decoration: none;
+            cursor: pointer;
+        }
+        @keyframes fadeInModal {
+            from { opacity: 0; transform: translateY(-20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
         @media (max-width: 768px) {
             .container { margin: 10px; padding: 20px; }
-            input, button { font-size: 14px; padding: 10px; }
+            input, button, textarea { font-size: 14px; padding: 10px; }
+            .footer a { margin: 0 5px; }
+            .footer .social-icon { font-size: 1.2em; }
         }
     </style>
 </head>
@@ -626,6 +800,49 @@ exports.updateTargetUrl = [
         <!-- 管理密碼將由後端自動生成，並在結果中顯示 -->
         <button onclick="shortenUrl()">縮短網址</button>
         <div id="shortenResult" class="result"></div>
+
+        <!-- Sponsor Section -->
+        <div class="sponsor-section">
+            <h2>贊助我們</h2>
+            <p>如果您喜歡這個服務並希望支持我們的開發，請考慮贊助我們！您的支持是我們持續改進的動力。</p>
+            <a href="https://github.com/sponsors/your-github-profile" target="_blank">
+                <i class="fas fa-heart"></i> GitHub 贊助
+            </a>
+            <a href="https://ko-fi.com/yourprofile" target="_blank">
+                <i class="fas fa-coffee"></i> Buy Me a Coffee
+            </a>
+            <a href="https://patreon.com/yourprofile" target="_blank">
+                <i class="fab fa-patreon"></i> Patreon
+            </a>
+            <p>感謝您的慷慨！</p>
+        </div>
+
+        <!-- Footer with GitHub and Feedback -->
+        <div class="footer">
+            <a href="https://github.com/your-username/url-redirect-and-shortener" target="_blank" title="GitHub 專案">
+                <i class="fab fa-github social-icon"></i> GitHub 開源
+            </a>
+            <button class="link-button" onclick="openFeedbackModal()">意見回饋</button>
+            <p>&copy; 2025 我的縮網址系統. All rights reserved.</p>
+        </div>
+    </div>
+
+    <!-- Feedback Modal -->
+    <div id="feedbackModal" class="modal">
+        <div class="modal-content">
+            <span class="close-button" onclick="closeFeedbackModal()">&times;</span>
+            <h2>意見回饋</h2>
+            <div class="form-group">
+                <label for="feedbackMessage">您的意見:</label>
+                <textarea id="feedbackMessage" rows="5" placeholder="請輸入您的意見或建議 (最多 500 字元)" required></textarea>
+            </div>
+            <div class="form-group">
+                <label for="contactInfo">聯絡方式 (可選):</label>
+                <input type="text" id="contactInfo" placeholder="您的 Email 或其他聯絡方式 (最多 100 字元)">
+            </div>
+            <button onclick="submitFeedback()">提交意見</button>
+            <div id="feedbackResult" class="result"></div>
+        </div>
     </div>
 
     <script src="script.js"></script>
@@ -713,6 +930,74 @@ async function shortenUrl() {
         resultDiv.innerHTML = '<p class="error-message">網路或伺服器錯誤，請檢查控制台。</p>';
     }
 }
+
+// Feedback Modal Functions
+const feedbackModal = document.getElementById('feedbackModal');
+const feedbackMessageInput = document.getElementById('feedbackMessage');
+const contactInfoInput = document.getElementById('contactInfo');
+const feedbackResultDiv = document.getElementById('feedbackResult');
+
+function openFeedbackModal() {
+    feedbackModal.style.display = 'flex'; // Use flex to center content
+    feedbackMessageInput.value = '';
+    contactInfoInput.value = '';
+    feedbackResultDiv.innerHTML = '';
+}
+
+function closeFeedbackModal() {
+    feedbackModal.style.display = 'none';
+}
+
+// Close modal when clicking outside of it
+window.onclick = function(event) {
+    if (event.target == feedbackModal) {
+        closeFeedbackModal();
+    }
+}
+
+async function submitFeedback() {
+    const message = feedbackMessageInput.value;
+    const contactInfo = contactInfoInput.value;
+    feedbackResultDiv.innerHTML = '';
+
+    if (!message || message.trim().length === 0) {
+        feedbackResultDiv.innerHTML = '<p class="error-message">意見回饋訊息不能為空。</p>';
+        return;
+    }
+    if (message.length > 500) {
+        feedbackResultDiv.innerHTML = '<p class="error-message">意見回饋訊息超過 500 個字元的限制。</p>';
+        return;
+    }
+    if (contactInfo && contactInfo.length > 100) {
+        feedbackResultDiv.innerHTML = '<p class="error-message">聯絡方式超過 100 個字元的限制。</p>';
+        return;
+    }
+
+    try {
+        const response = await fetch('/api/feedback', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ message, contactInfo })
+        });
+
+        const data = await response.json();
+
+        if (response.ok) {
+            feedbackResultDiv.innerHTML = `<p class="success-message">${data.message}</p>`;
+            // Optionally close modal after a short delay
+            setTimeout(() => {
+                closeFeedbackModal();
+            }, 2000);
+        } else {
+            feedbackResultDiv.innerHTML = `<p class="error-message">錯誤: ${data.error || '提交意見失敗'}</p>`;
+        }
+    } catch (error) {
+        console.error('提交意見請求失敗:', error);
+        feedbackResultDiv.innerHTML = '<p class="error-message">網路或伺服器錯誤，請檢查控制台。</p>';
+    }
+}
 */
 
 // =============================================================================
@@ -727,6 +1012,7 @@ async function shortenUrl() {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>縮網址後台管理</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <style>
         body { font-family: 'Inter', Arial, sans-serif; margin: 0; padding: 20px; background-color: #f0f2f5; display: flex; justify-content: center; align-items: flex-start; min-height: 100vh; }
         .container {
@@ -837,9 +1123,35 @@ async function shortenUrl() {
             border-radius: 8px;
             box-shadow: 0 2px 5px rgba(0,0,0,0.05);
         }
+        /* Footer styles */
+        .footer {
+            margin-top: 40px;
+            text-align: center;
+            color: #777;
+            font-size: 0.9em;
+            padding-top: 20px;
+            border-top: 1px solid #e0e0e0;
+        }
+        .footer a {
+            color: #007bff;
+            text-decoration: none;
+            margin: 0 10px;
+            transition: color 0.3s ease;
+        }
+        .footer a:hover {
+            color: #0056b3;
+            text-decoration: underline;
+        }
+        .footer .social-icon {
+            font-size: 1.5em;
+            vertical-align: middle;
+            margin-right: 5px;
+        }
         @media (max-width: 768px) {
             .container { margin: 10px; padding: 20px; }
             input, button { font-size: 14px; padding: 10px; }
+            .footer a { margin: 0 5px; }
+            .footer .social-icon { font-size: 1.2em; }
         }
     </style>
 </head>
@@ -914,6 +1226,14 @@ async function shortenUrl() {
                     <canvas id="referrerChart"></canvas>
                 </div>
             </div>
+        </div>
+
+        <!-- Footer with GitHub -->
+        <div class="footer">
+            <a href="https://github.com/your-username/url-redirect-and-shortener" target="_blank" title="GitHub 專案">
+                <i class="fab fa-github social-icon"></i> GitHub 開源
+            </a>
+            <p>&copy; 2025 我的縮網址系統. All rights reserved.</p>
         </div>
     </div>
 

@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>一個免費強大的縮網址服務</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <style>
         body { font-family: 'Inter', Arial, sans-serif; margin: 0; padding: 20px; background-color: #f0f2f5; display: flex; justify-content: center; align-items: flex-start; min-height: 100vh; }
         .container {
@@ -14,11 +15,12 @@
             width: 100%;
             max-width: 700px;
             box-sizing: border-box;
+            position: relative; /* For feedback button positioning */
         }
         h1 { color: #333; text-align: center; margin-bottom: 30px; }
         .form-group { margin-bottom: 15px; }
         label { display: block; margin-bottom: 5px; color: #555; font-weight: bold; }
-        input[type="text"], input[type="url"], input[type="password"], input[type="datetime-local"] {
+        input[type="text"], input[type="url"], input[type="password"], input[type="datetime-local"], textarea {
             width: calc(100% - 24px);
             padding: 12px;
             margin-bottom: 15px;
@@ -28,7 +30,7 @@
             box-sizing: border-box;
             transition: border-color 0.3s ease;
         }
-        input[type="text"]:focus, input[type="url"]:focus, input[type="password"]:focus, input[type="datetime-local"]:focus {
+        input[type="text"]:focus, input[type="url"]:focus, input[type="password"]:focus, input[type="datetime-local"]:focus, textarea:focus {
             border-color: #007bff;
             outline: none;
             box-shadow: 0 0 5px rgba(0, 123, 255, 0.2);
@@ -44,6 +46,7 @@
             transition: background-color 0.3s ease, transform 0.2s ease;
             box-shadow: 0 4px 8px rgba(0, 123, 255, 0.2);
             width: 100%;
+            margin-bottom: 10px; /* Add margin for multiple buttons */
         }
         button:hover {
             background-color: #0056b3;
@@ -93,9 +96,110 @@
         }
         .admin-info p { margin-bottom: 5px; }
         .admin-info strong { color: #664d03; }
+         /* Footer styles */
+        .footer {
+            margin-top: 40px;
+            text-align: center;
+            color: #777;
+            font-size: 0.9em;
+            padding-top: 20px;
+            border-top: 1px solid #e0e0e0;
+        }
+        .footer a {
+            color: #007bff;
+            text-decoration: none;
+            margin: 0 10px;
+            transition: color 0.3s ease;
+        }
+        .footer a:hover {
+            color: #0056b3;
+            text-decoration: underline;
+        }
+        .footer .social-icon {
+            font-size: 1.5em;
+            vertical-align: middle;
+            margin-right: 5px;
+        }
+        .sponsor-section {
+            margin-top: 30px;
+            padding: 20px;
+            background-color: #e6f7ff;
+            border: 1px solid #a8d7ff;
+            border-radius: 8px;
+            text-align: center;
+        }
+        .sponsor-section h2 {
+            color: #007bff;
+            margin-bottom: 15px;
+        }
+        .sponsor-section p {
+            margin-bottom: 10px;
+            line-height: 1.6;
+        }
+        .sponsor-section a {
+            display: inline-block;
+            background-color: #28a745;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 5px;
+            text-decoration: none;
+            margin: 10px 5px;
+            transition: background-color 0.3s ease;
+        }
+        .sponsor-section a:hover {
+            background-color: #218838;
+        }
+
+        /* Modal styles */
+        .modal {
+            display: none; /* Hidden by default */
+            position: fixed; /* Stay in place */
+            z-index: 1000; /* Sit on top */
+            left: 0;
+            top: 0;
+            width: 100%; /* Full width */
+            height: 100%; /* Full height */
+            overflow: auto; /* Enable scroll if needed */
+            background-color: rgba(0,0,0,0.4); /* Black w/ opacity */
+            align-items: center;
+            justify-content: center;
+        }
+        .modal-content {
+            background-color: #fefefe;
+            margin: auto;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+            width: 90%;
+            max-width: 500px;
+            position: relative;
+            animation: fadeInModal 0.3s ease-out;
+        }
+        .close-button {
+            color: #aaa;
+            position: absolute;
+            top: 10px;
+            right: 15px;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        .close-button:hover,
+        .close-button:focus {
+            color: black;
+            text-decoration: none;
+            cursor: pointer;
+        }
+        @keyframes fadeInModal {
+            from { opacity: 0; transform: translateY(-20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
         @media (max-width: 768px) {
             .container { margin: 10px; padding: 20px; }
-            input, button { font-size: 14px; padding: 10px; }
+            input, button, textarea { font-size: 14px; padding: 10px; }
+            .footer a { margin: 0 5px; }
+            .footer .social-icon { font-size: 1.2em; }
         }
     </style>
 </head>
@@ -122,6 +226,49 @@
         <!-- 管理密碼將由後端自動生成，並在結果中顯示 -->
         <button onclick="shortenUrl()">縮短網址</button>
         <div id="shortenResult" class="result"></div>
+
+          <!-- Sponsor Section -->
+        <div class="sponsor-section">
+            <h2>贊助我們</h2>
+            <p>如果您喜歡這個服務並希望支持我們的開發，請考慮贊助我們！您的支持是我們持續改進的動力。</p>
+            <!-- <a href="https://github.com/sponsors/justintien" target="_blank">
+                <i class="fas fa-heart"></i> GitHub 贊助
+            </a> -->
+            <a href="https://ko-fi.com/justintien" target="_blank">
+                <i class="fas fa-coffee"></i> Buy Me a Coffee
+            </a>
+            <a href="https://patreon.com/justintien" target="_blank">
+                <i class="fab fa-patreon"></i> Patreon
+            </a>
+            <p>感謝您的慷慨！</p>
+        </div>
+
+        <!-- Footer with GitHub and Feedback -->
+        <div class="footer">
+            <a href="https://github.com/justintien/url-redirect-and-shortener" target="_blank" title="GitHub 專案">
+                <i class="fab fa-github social-icon"></i> GitHub 開源
+            </a>
+            <button class="link-button" onclick="openFeedbackModal()">意見回饋</button>
+            <p>&copy; 2025 一個免費強大的縮網址服務. All rights reserved.</p>
+        </div>
+    </div>
+
+    <!-- Feedback Modal -->
+    <div id="feedbackModal" class="modal">
+        <div class="modal-content">
+            <span class="close-button" onclick="closeFeedbackModal()">&times;</span>
+            <h2>意見回饋</h2>
+            <div class="form-group">
+                <label for="feedbackMessage">您的意見:</label>
+                <textarea id="feedbackMessage" rows="5" placeholder="請輸入您的意見或建議 (最多 500 字元)" required></textarea>
+            </div>
+            <div class="form-group">
+                <label for="contactInfo">聯絡方式 (可選):</label>
+                <input type="text" id="contactInfo" placeholder="您的 Email 或其他聯絡方式 (最多 100 字元)">
+            </div>
+            <button onclick="submitFeedback()">提交意見</button>
+            <div id="feedbackResult" class="result"></div>
+        </div>
     </div>
 
     <script src="script.js"></script>

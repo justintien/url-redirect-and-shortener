@@ -3,6 +3,7 @@ const mongoose = require('mongoose');
 const path = require('path');
 const urlController = require('./controllers/urlController'); // 引入 URL 控制器
 const adminController = require('./controllers/adminController'); // 引入新的 Admin 控制器
+const feedbackController = require('./controllers/feedbackController'); // 引入新的 Feedback 控制器
 
 const app = express();
 const PORT = process.env.PORT || 9527;
@@ -57,6 +58,9 @@ app.post('/api/admin/details/:shortId', adminController.getAdminUrlDetails);
 // PUT /api/admin/update/:shortId
 // 更新指定短網址的目標長網址，需要管理密碼驗證
 app.put('/api/admin/update/:shortId', adminController.updateTargetUrl);
+
+// API 路由 - 提交意見回饋
+app.post('/api/feedback', feedbackController.submitFeedback);
 
 // GET /
 // 應用程式的根路由，導向到前端的 index.html 頁面 (縮網址主頁)
